@@ -1,0 +1,163 @@
+<html>
+<head>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .bg-black {
+      background-color: black;
+    }
+    .bg-gray {
+      background-color: gray;
+    }
+    .bg-green {
+      background-color: green;
+    }
+    .bg-yellow {
+      background-color: yellow;
+    }
+    .square {
+      text-align: center;
+      width: 30px;
+      height: 30px;
+    }
+    .text-white {
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Alpine.js Wordle</h1>
+  <div x-data="{
+    currentGuess: '',
+    guesses: [],
+    message: '',
+    getStyledLetters(guess) {
+      // Fill array this way to avoid referencing the same object
+      const results = Array.from({ length: 5 }, () => ({ class: 'bg-gray', letter: '' }))
+      const wordLetterCount = this.letterCount(this.word)
+      const matchCount = this.createWordMap()
+    
+      // Green check
+      for (let i = 0; i < guess?.length; i++) {
+        const letter = guess[i]
+        if (
+          !results[i].letter &&
+          letter === this.word[i]
+        ) {
+          matchCount.add(letter)
+          results[i].letter = letter
+          results[i].class = 'bg-green'
+        }
+      }
+    
+      // Yellow check
+      for (let i = 0; i < guess?.length; i++) {
+        const letter = guess[i]
+        if (
+          !results[i].letter &&
+          wordLetterCount.has(letter) &&
+          (
+            !matchCount.get(letter) ||
+            matchCount.get(letter) < wordLetterCount.get(letter)
+          )
+        ) {
+          matchCount.add(letter)
+          results[i].letter = letter
+          results[i].class = 'bg-yellow'
+        }
+      }
+
+      // Black check
+      for (let i = 0; i < guess?.length; i++) {
+        const letter = guess[i]
+        if (!results[i].letter) {
+          results[i].letter = letter
+          results[i].class = 'bg-black text-white'
+        }
+      }
+
+      return results
+    },
+    get gameOver() {
+      if (this.guesses.length >= 6) return true
+      if (this.guesses.at(-1) === this.word) return true
+      return false
+    },
+    isValidWord(word) {
+      validCharacters = /^[a-zA-Z]+$/
+      const result = { valid: true, message: '' }
+      if (!validCharacters.test(word)) {
+        result.valid = false
+        result.message = 'Guess contains invalid characters'
+      } else if (word.length !== 5) {
+        result.valid = false
+        result.message = 'Guess must be 5 letters'
+      } else if (this.guesses.includes(word)) {
+        result.valid = false
+        result.message = 'That word has already been guessed'
+      }
+      return result
+    },
+    handleGuess(e) {
+      e.preventDefault()
+      result = this.isValidWord(this.currentGuess)
+      if (result.valid) {
+        this.guesses.push(this.currentGuess.toUpperCase())
+        this.message = ''
+      } else {
+        this.message = result.message
+      }
+    },
+    get word() {
+      queryParams = new URLSearchParams(window.location.search)
+      word = queryParams.get('word')
+      // TODO: Add support for finding valid word?
+      return word && this.isValidWord(word).valid ? word.toUpperCase() : 'APPLE'
+    },
+    letterCount(word) {
+      const wordMap = new Map()
+      for (letter of word) {
+        count = wordMap.get(letter)
+        wordMap.set(letter, count ? count + 1 : 1)
+      }
+
+      return wordMap
+    },
+    createWordMap() {
+      const wordMap = new Map()
+    
+      return {
+        add(letter) {
+          count = wordMap.get(letter)
+          wordMap.set(letter, count ? count + 1 : 1)
+        },
+        get(letter) {
+          return wordMap.get(letter)
+        }
+      }
+    }
+  }">
+    <table>
+      <template x-for="i in 6">
+        <tr>
+          <template x-for="info in getStyledLetters(guesses[i - 1])">
+            <td
+              x-text="info.letter"
+              :class="info.class + ' square'"
+            >
+            </td>
+          </template>
+        </tr>
+      </template>
+    </table>
+    <br />
+    <form>
+      <input type="text" x-model="currentGuess" />
+      <button @click="handleGuess" x-bind:disabled="gameOver">Guess</button>
+    </form>
+  
+    <template x-if="!!message">
+      <div x-text="message"></div>
+    </template>
+  </div>
+</body>
+</html>
