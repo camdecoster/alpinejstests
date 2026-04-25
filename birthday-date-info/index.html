@@ -1,0 +1,62 @@
+<html>
+<head>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <style>
+    body {
+      padding-left: 30px;
+      padding-right: 30px;
+    }
+  </style>
+</head>
+
+<body x-data="{
+  defaultBirthday: new Date(2000, 0, 1)
+}">
+  <h2>Past birthday info</h2>
+  <div x-data="{
+    birthday: defaultBirthday,
+    // birthdayList: ,
+    birthdayString: defaultBirthday.toLocaleDateString('en-CA'),
+    dateFormat: new Intl.DateTimeFormat('en-US', { weekday: 'long'}),
+    handleBirthdayUpdate(e) {
+      // Add time to create date with correct time zone
+      this.birthday = new Date(this.birthdayString + 'T00:00');
+    }
+  }">
+    <div class="card-group">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Birthday Inputs</h5>
+          <div>
+            <label for="birthday-picker">What is your birthday?</label>
+            </br>
+            <input id="birthday-picker" type="date" @change="handleBirthdayUpdate" x-model="birthdayString" />
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Past Birthdays</h5>
+          <table>
+            <tr>
+              <th>Years ago</th>
+              <th>Date</th>
+              <th>Day of week</th>
+            </tr>
+            <template x-for="i in (new Date()).getFullYear() - birthday.getFullYear()">
+              <tr x-data="{
+                    rowDate: (i) => new Date((new Date()).getFullYear() - i, birthday.getMonth(), birthday.getDate())
+                  }">
+                <td x-text="`${i} years ago`"></td>
+                <td x-text="rowDate(i).toLocaleDateString('en-CA')"></td>
+                <td x-text="dateFormat.format(rowDate(i))"></td>
+              </tr>
+            </template>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
